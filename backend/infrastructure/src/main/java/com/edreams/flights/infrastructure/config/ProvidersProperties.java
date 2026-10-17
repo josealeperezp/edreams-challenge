@@ -20,9 +20,14 @@ public record ProvidersProperties(ProviderSettings alpha, ProviderSettings beta,
         Objects.requireNonNull(gamma, "providers.gamma is required");
     }
 
+    /**
+     * {@code timeout} bounds one whole fetch attempt, headers and streamed body included, because the
+     * JDK request factory applies it to the entire exchange. It must exceed the time a full inventory
+     * takes to stream and store; the connect timeout (2 s) is what catches a dead host quickly.
+     */
     public record ProviderSettings(String baseUrl, Duration timeout) {
 
-        private static final Duration DEFAULT_TIMEOUT = Duration.ofSeconds(3);
+        private static final Duration DEFAULT_TIMEOUT = Duration.ofSeconds(300);
 
         public ProviderSettings {
             Objects.requireNonNull(baseUrl, "base-url is required");

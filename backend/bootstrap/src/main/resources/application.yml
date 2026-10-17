@@ -5,7 +5,7 @@ spring:
     virtual:
       enabled: true
   datasource:
-    url: ${DB_URL:jdbc:postgresql://localhost:15432/flights}
+    url: ${DB_URL:jdbc:postgresql://localhost:15432/flights}?reWriteBatchedInserts=true
     username: ${DB_USER:flights}
     password: ${DB_PASSWORD:flights}
   flyway:
@@ -14,6 +14,11 @@ spring:
     redis:
       host: ${REDIS_HOST:localhost}
       port: ${REDIS_PORT:16379}
+      timeout: 500ms          # a Redis outage must cost milliseconds per search, not Lettuce's 60 s default
+      connect-timeout: 500ms
+  mvc:
+    problemdetails:
+      enabled: true
 
 server:
   port: 8080
@@ -35,10 +40,32 @@ management:
 providers:
   alpha:
     base-url: ${PROVIDERS_ALPHA_URL:http://localhost:8081/alpha}
-    timeout: ${PROVIDERS_ALPHA_TIMEOUT:3s}
+    timeout: ${PROVIDERS_ALPHA_TIMEOUT:300s}   # whole stream per attempt; connect timeout is 2 s
   beta:
     base-url: ${PROVIDERS_BETA_URL:http://localhost:8081/beta}
-    timeout: ${PROVIDERS_BETA_TIMEOUT:3s}
+    timeout: ${PROVIDERS_BETA_TIMEOUT:300s}   # whole stream per attempt; connect timeout is 2 s
   gamma:
     base-url: ${PROVIDERS_GAMMA_URL:http://localhost:8081/gamma}
-    timeout: ${PROVIDERS_GAMMA_TIMEOUT:3s}
+    timeout: ${PROVIDERS_GAMMA_TIMEOUT:300s}   # whole stream per attempt; connect timeout is 2 s
+
+flights:
+  pricing:
+    markup-percent: ${FLIGHTS_MARKUP_PERCENT:5}
+  validation:
+    min-connection: 30m
+    max-layover: 24h
+  ingestion:
+    run-on-startup: ${FLIGHTS_INGEST_ON_STARTUP:true}
+    cron: ${FLIGHTS_INGEST_CRON:0 0 3 * * *}
+    batch-size: 1000
+    provider-budget: 300s
+    keep-runs: 3
+  search:
+    max-limit: 100
+    cache-ttl: 60s
+  resilience:
+    retry-attempts: 3
+    retry-initial-wait: 500ms
+    breaker-window: 4
+    breaker-failure-rate-percent: 50
+    breaker-open-duration: 30s

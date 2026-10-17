@@ -14,6 +14,12 @@
   <name>flights-bootstrap</name>
   <description>Spring Boot application: wiring, configuration, migrations, architecture and integration tests.</description>
 
+  <properties>
+    <!-- JUnit tags excluded from the normal run; empty it to run the pagination benchmark:
+         mvn -pl bootstrap -am test -Dsurefire.excludedGroups= -Dgroups=benchmark -Dtest=PaginationBenchmark -Dsurefire.failIfNoSpecifiedTests=false -->
+    <surefire.excludedGroups>benchmark</surefire.excludedGroups>
+  </properties>
+
   <dependencies>
     <dependency>
       <groupId>com.edreams.flights</groupId>
@@ -69,11 +75,23 @@
       <artifactId>archunit-junit5</artifactId>
       <scope>test</scope>
     </dependency>
+    <dependency>
+      <groupId>org.wiremock</groupId>
+      <artifactId>wiremock-standalone</artifactId>
+      <scope>test</scope>
+    </dependency>
   </dependencies>
 
   <build>
     <finalName>flights-backend</finalName>
     <plugins>
+      <plugin>
+        <groupId>org.apache.maven.plugins</groupId>
+        <artifactId>maven-surefire-plugin</artifactId>
+        <configuration>
+          <excludedGroups>${surefire.excludedGroups}</excludedGroups>
+        </configuration>
+      </plugin>
       <plugin>
         <groupId>org.springframework.boot</groupId>
         <artifactId>spring-boot-maven-plugin</artifactId>

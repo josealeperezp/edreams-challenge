@@ -5,8 +5,10 @@ OTA flight aggregator. It ingests itineraries from three mock GDS providers
 deduplicates them, applies the OTA markup, stores the result in PostgreSQL and
 serves a keyset-paginated search API with a React dashboard.
 
-> Status: scaffold. The whole stack boots end to end; business logic lands
-> slice by slice. Design and trade-offs live in [SOLUTION.md](SOLUTION.md).
+> Status: complete. Backend (ingestion, deduplication, pricing, keyset search,
+> cache, SSE) and dashboard (search and filters, charts over the filtered
+> inventory, live run and provider panels). Design and trade-offs live in
+> [SOLUTION.md](SOLUTION.md).
 
 ## Run the full stack
 
@@ -17,7 +19,11 @@ docker compose up --build
 | Service          | URL                                                                  |
 |------------------|----------------------------------------------------------------------|
 | Dashboard        | http://localhost:3000                                                |
-| Backend API      | http://localhost:8080/api/system/info                                |
+| Search API       | http://localhost:8080/api/itineraries?origin=MAD&destination=BCN&maxPrice=150&carrier=IB&limit=20 |
+| Search stats     | http://localhost:8080/api/itineraries/stats?origin=MAD&destination=BCN      |
+| Ingestion        | `POST /api/ingestion/runs`, `GET /api/ingestion/runs/latest`, `GET /api/ingestion/events` (SSE) |
+| Provider status  | http://localhost:8080/api/providers/status                           |
+| Backend info     | http://localhost:8080/api/system/info                                |
 | Backend health   | http://localhost:8080/actuator/health                                |
 | Mock providers   | http://localhost:8081/alpha/flights, `/beta/flights`, `/gamma/flights` |
 | Mock metadata    | http://localhost:8081/alpha/meta, `/beta/meta`, `/gamma/meta`          |
@@ -54,9 +60,36 @@ cd backend && mvn -pl bootstrap spring-boot:run
 # backend tests (Testcontainers needs a running Docker daemon)
 cd backend && mvn verify
 
+# pagination benchmark against the compose database, after an ingestion
+cd backend && mvn -pl bootstrap -am test -Dsurefire.excludedGroups= -Dgroups=benchmark -Dtest=PaginationBenchmark -Dsurefire.failIfNoSpecifiedTests=false
+
 # frontend with hot reload, proxies /api and /actuator to :8080
 cd frontend && npm install && npm run dev
 
 # mock providers on :8081
 cd providers-mock && mvn spring-boot:run
 ```
+
+## Demo script
+
+1. `docker compose up --build` and open http://localhost:3000. The boot run
+   appears live in the Ingestion panel: run started, each provider as it
+   finishes with its latency and counts, run completed. Results and charts
+   fill in once it completes.
+2. Search `MAD` to `BCN`, then add a max price or a carrier. The headline
+   counts the whole match, the charts describe it, the table lists it by
+   price with every provider's quote; "Load more" follows the keyset cursor
+   shown in the footer. The filters are in the URL.
+3. Break a provider and watch the system degrade instead of fail:
+
+   ```bash
+   curl -s -X PUT localhost:8081/admin/chaos/beta -H 'content-type: application/json' \
+        -d '{"enabled":true,"latencyMinMs":0,"latencyMaxMs":0,"errorRate":1}'
+   ```
+
+   Click "Run ingestion now". Beta fails after its retries, its breaker turns
+   OPEN in the Providers panel, the run ends PARTIAL, search keeps answering,
+   and rows that only Beta confirmed earlier are marked stale.
+4. Reset Beta with `curl -s -X DELETE localhost:8081/admin/chaos/beta`, wait
+   for the breaker to show HALF OPEN (30 s), run again: COMPLETED, breaker
+   CLOSED, stale markers gone.

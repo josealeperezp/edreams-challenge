@@ -48,6 +48,8 @@ jobs:
         run: |
           curl -fsS http://localhost:8080/actuator/health
           curl -fsS http://localhost:3000/api/system/info
+          curl -fsS http://localhost:3000/ | grep -q 'id="root"'
+          curl -fsS http://localhost:3000/api/itineraries/stats
           curl -fsS http://localhost:8081/alpha/flights > /dev/null
       - if: always()
         run: docker compose down -v

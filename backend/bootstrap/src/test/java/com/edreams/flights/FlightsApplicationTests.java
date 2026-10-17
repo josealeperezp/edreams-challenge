@@ -9,29 +9,13 @@ import java.util.List;
 
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.boot.test.context.SpringBootTest;
-import org.springframework.boot.testcontainers.service.connection.ServiceConnection;
 import org.springframework.boot.webmvc.test.autoconfigure.AutoConfigureMockMvc;
 import org.springframework.jdbc.core.simple.JdbcClient;
 import org.springframework.test.web.servlet.MockMvc;
-import org.testcontainers.containers.GenericContainer;
-import org.testcontainers.containers.PostgreSQLContainer;
-import org.testcontainers.junit.jupiter.Container;
-import org.testcontainers.junit.jupiter.Testcontainers;
 
 /** Boots the real application against disposable PostgreSQL and Redis containers. */
-@SpringBootTest
 @AutoConfigureMockMvc
-@Testcontainers
-class FlightsApplicationTests {
-
-    @Container
-    @ServiceConnection
-    static final PostgreSQLContainer<?> POSTGRES = new PostgreSQLContainer<>("postgres:17-alpine");
-
-    @Container
-    @ServiceConnection(name = "redis")
-    static final GenericContainer<?> REDIS = new GenericContainer<>("redis:7-alpine").withExposedPorts(6379);
+class FlightsApplicationTests extends AbstractIntegrationTest {
 
     @Autowired
     private JdbcClient jdbc;
@@ -47,6 +31,8 @@ class FlightsApplicationTests {
                 .list();
 
         assertThat(tables).contains("itinerary", "provider_offer", "ingestion_run");
+        Integer migrations = jdbc.sql("select count(*) from flyway_schema_history where success").query(Integer.class).single();
+        assertThat(migrations).isGreaterThanOrEqualTo(2);
     }
 
     @Test

@@ -1,3 +1,5 @@
+import { getJson } from './client'
+
 export interface ProviderInfo {
   id: string
   baseUrl: string
@@ -15,14 +17,13 @@ export interface Health {
   components?: Record<string, { status: string }>
 }
 
-async function getJson<T>(url: string): Promise<T> {
-  const response = await fetch(url, { headers: { Accept: 'application/json' } })
-  if (!response.ok) {
-    throw new Error(`${url} responded ${response.status}`)
-  }
-  return (await response.json()) as T
-}
-
 export const fetchSystemInfo = () => getJson<SystemInfo>('/api/system/info')
 
-export const fetchHealth = () => getJson<Health>('/actuator/health')
+/** Actuator answers 503 with a body when a component is DOWN; that body is still the answer. */
+export async function fetchHealth(): Promise<Health> {
+  const response = await fetch('/actuator/health', { headers: { Accept: 'application/json' } })
+  if (!response.ok && response.status !== 503) {
+    throw new Error(`/actuator/health responded ${response.status}`)
+  }
+  return (await response.json()) as Health
+}

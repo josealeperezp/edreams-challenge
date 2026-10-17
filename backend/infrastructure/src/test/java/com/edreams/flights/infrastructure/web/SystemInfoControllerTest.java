@@ -37,7 +37,7 @@ class SystemInfoControllerTest {
                 .andExpect(jsonPath("$.providers[0].id").value("ALPHA"))
                 .andExpect(jsonPath("$.providers[0].timeoutMillis").value(2000))
                 .andExpect(jsonPath("$.providers[1].id").value("BETA"))
-                .andExpect(jsonPath("$.providers[1].timeoutMillis").value(3000))
+                .andExpect(jsonPath("$.providers[1].timeoutMillis").value(300000))
                 .andExpect(jsonPath("$.providers[2].baseUrl").value("http://gamma"));
     }
 }
