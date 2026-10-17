@@ -1,0 +1,53 @@
+name: ci
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+jobs:
+  backend:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/setup-java@v6
+        with:
+          distribution: temurin
+          java-version: "25"
+          cache: maven
+      - name: Backend tests
+        run: mvn -B -ntp verify
+        working-directory: backend
+      - name: Mock providers tests
+        run: mvn -B -ntp verify
+        working-directory: providers-mock
+
+  frontend:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: frontend
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/setup-node@v7
+        with:
+          node-version: "24"
+          cache: npm
+          cache-dependency-path: frontend/package-lock.json
+      - run: npm ci
+      - run: npm test
+      - run: npm run build
+
+  compose:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+      - name: Boot the full stack
+        run: docker compose up --build --wait
+      - name: Smoke test
+        run: |
+          curl -fsS http://localhost:8080/actuator/health
+          curl -fsS http://localhost:3000/api/system/info
+          curl -fsS http://localhost:8081/alpha/flights > /dev/null
+      - if: always()
+        run: docker compose down -v

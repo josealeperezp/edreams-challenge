@@ -1,0 +1,87 @@
+name: edreams-flights
+
+services:
+  postgres:
+    image: postgres:17-alpine
+    environment:
+      POSTGRES_DB: flights
+      POSTGRES_USER: flights
+      POSTGRES_PASSWORD: flights
+    ports:
+      - "15432:5432"
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U flights -d flights"]
+      interval: 5s
+      timeout: 3s
+      retries: 10
+
+  redis:
+    image: redis:7-alpine
+    ports:
+      - "16379:6379"
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 5s
+      timeout: 3s
+      retries: 10
+
+  providers-mock:
+    build: ./providers-mock
+    environment:
+      MOCK_SEED: ${MOCK_SEED:-42}
+      MOCK_INVENTORY_SIZE: ${MOCK_INVENTORY_SIZE:-100000}
+      MOCK_INVENTORY_DAYS: ${MOCK_INVENTORY_DAYS:-30}
+      MOCK_BASE_DATE: ${MOCK_BASE_DATE:-}
+      MOCK_CORRUPTION_RATE: ${MOCK_CORRUPTION_RATE:-0.015}
+      MOCK_CHAOS_ENABLED: ${MOCK_CHAOS_ENABLED:-true}
+      MOCK_LATENCY_MIN_MS: ${MOCK_LATENCY_MIN_MS:-100}
+      MOCK_LATENCY_MAX_MS: ${MOCK_LATENCY_MAX_MS:-5000}
+      MOCK_ERROR_RATE: ${MOCK_ERROR_RATE:-0.10}
+    ports:
+      - "8081:8081"
+    healthcheck:
+      test: ["CMD", "wget", "-qO-", "http://localhost:8081/actuator/health"]
+      interval: 5s
+      timeout: 3s
+      retries: 20
+      start_period: 20s
+
+  backend:
+    build: ./backend
+    environment:
+      DB_URL: jdbc:postgresql://postgres:5432/flights
+      DB_USER: flights
+      DB_PASSWORD: flights
+      REDIS_HOST: redis
+      REDIS_PORT: "6379"
+      PROVIDERS_ALPHA_URL: http://providers-mock:8081/alpha
+      PROVIDERS_BETA_URL: http://providers-mock:8081/beta
+      PROVIDERS_GAMMA_URL: http://providers-mock:8081/gamma
+    ports:
+      - "8080:8080"
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+      providers-mock:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "wget", "-qO-", "http://localhost:8080/actuator/health"]
+      interval: 5s
+      timeout: 3s
+      retries: 30
+      start_period: 40s
+
+  frontend:
+    build: ./frontend
+    ports:
+      - "3000:80"
+    depends_on:
+      backend:
+        condition: service_healthy
+
+volumes:
+  pgdata:

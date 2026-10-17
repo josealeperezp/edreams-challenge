@@ -1,0 +1,19 @@
+# Maven
+target/
+
+# Node
+node_modules/
+dist/
+*.tsbuildinfo
+
+# IDEs
+.idea/
+*.iml
+.vscode/
+
+# OS
+.DS_Store
+
+# Local environment
+.env
+*.log
