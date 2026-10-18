@@ -1,6 +1,7 @@
 # Prompt log
 
 Newest entries at the bottom. Each entry: date, tool, prompt summary, outcome.
+Tools and working method: SOLUTION.md, section 2.9.
 
 ## 2026-10-15 · Claude Code · challenge analysis
 **Prompt:** pasted the challenge statement, stated the constraint "Java 25 and
@@ -106,3 +107,15 @@ rounded to "0m", fixed to keep seconds under an hour. At one million rows
 EXPLAIN ANALYZE showed the first version of the stats query (GROUPING SETS)
 sorting the whole table on disk, 0.8 s; regrouping on all four columns at
 once with a Java rollup replaced the sort with a hash aggregate.
+
+## 2026-10-18 · Claude Code · documentation consolidation
+**Prompt:** "Let's organise the documentation a little bit": merge `CLAUDE.md`
+and `docs/ai` into SOLUTION.md, move this log to the repository root, end
+with README.md and SOLUTION.md as the only documentation files. "Plan first,
+then execute."
+
+**Outcome:** decided through the plan's questions: this log lives at the root
+as a separate file, and `CLAUDE.md` is kept untouched because Claude Code
+loads it automatically, in the live session too. `docs/ai/README.md` became
+SOLUTION.md 2.9 and the folder was removed; the README layout and the
+definition of done in `CLAUDE.md` point to the new path.

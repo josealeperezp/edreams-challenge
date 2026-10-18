@@ -169,8 +169,17 @@ global state library and no CSS framework: TanStack Query holds server state,
 React state holds the form.
 
 ### 2.9 AI tools utilized
-See [docs/ai/README.md](docs/ai/README.md) for the tools, the standing
-instructions in `CLAUDE.md`, and the prompt log.
+Claude Code (CLI) running the Claude Fable 5.1 model, used as a pair
+programmer from the terminal. Plan-driven strategy was used to implement this solution. Two files make that work reproducible:
+- `CLAUDE.md` at the repository root is the standing instruction set the
+  agent loads every session: architecture rules, conventions, commands and
+  the definition of done. It is the "agent system" engineered for this
+  codebase.
+- [prompts.md](prompts.md) is the chronological log of the prompts that
+  produced non-trivial work, with what was accepted, changed or rejected.
+
+Working method: every AI-generated change is reviewed and run locally. The
+test suite and the ArchUnit rules gate what is kept.
 
 ## 3. Data model and pagination
 

@@ -52,4 +52,4 @@ Enforced by backend/bootstrap/src/test/java/com/edreams/flights/ArchitectureTest
 1. Unit tests for the rule, adapter or component that changed.
 2. mvn verify green in backend, ArchitectureTest included.
 3. docker compose up --build still boots and /actuator/health reports UP.
-4. SOLUTION.md updated when a decision or trade-off changes. docs/ai/prompts.md updated with the prompt used.
+4. SOLUTION.md updated when a decision or trade-off changes. prompts.md updated with the prompt used.

@@ -44,7 +44,7 @@ backend/            Spring Boot 4 / Java 25, Maven multi-module (hexagonal)
   bootstrap/        Spring Boot app, config, Flyway migrations, arch + integration tests
 providers-mock/     standalone Spring Boot app simulating the 3 GDS providers (tooling, no tests)
 frontend/           React + TypeScript + Vite dashboard, served by nginx
-docs/ai/            how AI tools were used, prompt log
+prompts.md          prompt log; tools and working method in SOLUTION.md 2.9
 ```
 
 ## Local development
